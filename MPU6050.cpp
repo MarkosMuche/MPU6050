@@ -35,13 +35,13 @@ void MPU6050::setupSensor() {
   Wire.endTransmission();              // End the transmission
 
 }
-float* MPU6050::readSensor(float sensorReturn[6]) {
+float* MPU6050::readSensor(float sensorReturn[6],float dt) {
+  dt=dt/1000000;
   float  gyroAngle[3];
   Wire.beginTransmission(this->MPU_ADDRESS); // Start communicating with the MPU-6050
   Wire.write(0x3B);                    // Send the requested starting register
   Wire.endTransmission();              // End the transmission
   Wire.requestFrom(this->MPU_ADDRESS, 14);   // Request 14 bytes from the MPU-6050
-
   // Wait until all the bytes are received
   while (Wire.available() < 14);
   float accRaw[3];
@@ -62,36 +62,31 @@ float* MPU6050::readSensor(float sensorReturn[6]) {
   if (abs(accRaw[X]) < accMagnitude) {
     accAngle[X] = asin((float)accRaw[Y] / accMagnitude) * (180 / PI); // asin gives angle in radian. Convert to degree multiplying by 180/pi
   }
-
-  if (abs(accRaw[Y]) < accMagnitude) {
+  if (abs(accRaw[Y])< accMagnitude) {
     accAngle[Y] = asin((float)accRaw[X] / accMagnitude) * (180 / PI);
   }
   // offset subtraction
   gyroRaw[X] -= gyroOffset[X];
   gyroRaw[Y] -= gyroOffset[Y];
   gyroRaw[Z] -= gyroOffset[Z];
-
   // Rate calculation
   gyroRate[X] = gyroRaw[X] / GyroConst;
   gyroRate[Y] = gyroRaw[Y] / GyroConst;
   gyroRate[Z] = gyroRaw[Z] / GyroConst;
-
   // Angle calculation using integration
-  gyroAngle[X] += (gyroRaw[X] / (FREQ * GyroConst));
-  gyroAngle[Y] += (-gyroRaw[Y] / (FREQ * GyroConst)); // Change sign to match the accelerometer's one
-  gyroAngle[Z] += (-gyroRaw[Z] / (FREQ * GyroConst));
-
+  gyroAngle[X] += (gyroRaw[X] *dt/ ( GyroConst));
+  gyroAngle[Y] += (-gyroRaw[Y]*dt / ( GyroConst)); // Change sign to match the accelerometer's one
+  gyroAngle[Z] += ((-gyroRaw[Z] *dt)/ (GyroConst));   
   // Transfer roll to pitch if IMU has yawed
-  gyroAngle[Y] += gyroAngle[X] * sin(gyroRaw[Z] * (PI / (FREQ * GyroConst * 180)));
-  gyroAngle[X] -= gyroAngle[Y] * sin(gyroRaw[Z] * (PI / (FREQ * GyroConst * 180)));
+  gyroAngle[Y] += gyroAngle[X] * sin(gyroRaw[Z] * dt*(PI / ( GyroConst * 180)));
+  gyroAngle[X] -= gyroAngle[Y] * sin(gyroRaw[Z] * (PI / ( GyroConst * 180)));
   //float& rategyro = gyroRate;
-  sensorReturn[0] = gyroRate[0];
-  sensorReturn[1] = gyroRate[1];
-  sensorReturn[2] = gyroRate[2];
-  sensorReturn[3] = accAngle[0];
-  sensorReturn[4] = accAngle[1];
+  sensorReturn[0] = gyroRate[X];
+  sensorReturn[1] = gyroRate[Y];
+  sensorReturn[2] = gyroRate[Z];
+  sensorReturn[3] = accAngle[X];
+  sensorReturn[4] = accAngle[Y];
   sensorReturn[5] = gyroAngle[Z];
-
   return sensorReturn;
 }
 
