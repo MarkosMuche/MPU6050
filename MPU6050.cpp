@@ -37,7 +37,6 @@ void MPU6050::setupSensor() {
 }
 float* MPU6050::readSensor(float sensorReturn[6],float dt) {
   dt=dt/1000000;
-  float  gyroAngle[3];
   Wire.beginTransmission(this->MPU_ADDRESS); // Start communicating with the MPU-6050
   Wire.write(0x3B);                    // Send the requested starting register
   Wire.endTransmission();              // End the transmission
@@ -70,23 +69,23 @@ float* MPU6050::readSensor(float sensorReturn[6],float dt) {
   gyroRaw[Y] -= gyroOffset[Y];
   gyroRaw[Z] -= gyroOffset[Z];
   // Rate calculation
-  gyroRate[X] = gyroRaw[X] / GyroConst;
-  gyroRate[Y] = gyroRaw[Y] / GyroConst;
-  gyroRate[Z] = gyroRaw[Z] / GyroConst;
+  this->gyroRate[X] = gyroRaw[X] / this->GyroConst;
+  this->gyroRate[Y] = gyroRaw[Y] /  this->GyroConst;
+  this->gyroRate[Z] = gyroRaw[Z] / this->GyroConst;
   // Angle calculation using integration
-  gyroAngle[X] += (gyroRaw[X] *dt/ ( GyroConst));
-  gyroAngle[Y] += (-gyroRaw[Y]*dt / ( GyroConst)); // Change sign to match the accelerometer's one
-  gyroAngle[Z] += ((-gyroRaw[Z] *dt)/ (GyroConst));   
+  this->gyroAngle[X] += (gyroRaw[X] *dt/ ( this->GyroConst));
+  this->gyroAngle[Y] += (-gyroRaw[Y]*dt / ( this->GyroConst)); // Change sign to match the accelerometer's one
+  this->gyroAngle[Z] += ((-gyroRaw[Z] *dt)/ (this->GyroConst));   
   // Transfer roll to pitch if IMU has yawed
-  gyroAngle[Y] += gyroAngle[X] * sin(gyroRaw[Z] * dt*(PI / ( GyroConst * 180)));
-  gyroAngle[X] -= gyroAngle[Y] * sin(gyroRaw[Z] * (PI / ( GyroConst * 180)));
+  this->gyroAngle[Y] += this->gyroAngle[X] * sin(gyroRaw[Z] * dt*(PI / ( this->GyroConst * 180)));
+  this->gyroAngle[X] -= this->gyroAngle[Y] * sin(gyroRaw[Z] * (PI / ( this->GyroConst * 180)));
   //float& rategyro = gyroRate;
-  sensorReturn[0] = gyroRate[X];
-  sensorReturn[1] = gyroRate[Y];
-  sensorReturn[2] = gyroRate[Z];
-  sensorReturn[3] = accAngle[X];
-  sensorReturn[4] = accAngle[Y];
-  sensorReturn[5] = gyroAngle[Z];
+  sensorReturn[0] = this->gyroRate[X];
+  sensorReturn[1] = this->gyroRate[Y];
+  sensorReturn[2] = this->gyroRate[Z];
+  sensorReturn[3] = this->accAngle[X];
+  sensorReturn[4] = this->accAngle[Y];
+  sensorReturn[5] = this->gyroAngle[Z];
   return sensorReturn;
 }
 
